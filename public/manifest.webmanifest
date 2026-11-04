@@ -1,0 +1,16 @@
+{
+  "name": "Thiền Viện Tĩnh Lặng",
+  "short_name": "Thiền Viện",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "background_color": "#182c23",
+  "theme_color": "#182c23",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}
