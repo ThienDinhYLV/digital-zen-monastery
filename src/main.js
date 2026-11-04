@@ -1,0 +1,57 @@
+import {createSanctuary} from './scene.js';
+import {teachings,teachingById,offlineGuidance} from './teachings.js';
+
+const byId=id=>document.getElementById(id);
+const dialog=byId('panel'),container=byId('panel-content'),tag=byId('panel-tag'),status=byId('render-status');
+let environment=null,focus='home',timerId=null,remaining=300,running=false,audioContext=null,natureSound=null;
+let toastTimeout=null;
+function toast(message){const e=byId('toast');e.textContent=message;e.classList.add('show');clearTimeout(toastTimeout);toastTimeout=setTimeout(()=>e.classList.remove('show'),4200);}
+const escapeHTML=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const sourceLinks=(ids)=>`<div class="sources">${ids.map(id=>teachingById[id]).filter(Boolean).map(t=>`<a href="${t.url}" target="_blank" rel="noopener noreferrer">${escapeHTML(t.id)} ↗</a>`).join('')}</div>`;
+function card(t){return `<article class="ref-card"><strong>${escapeHTML(t.name)}</strong><p>${escapeHTML(t.summary)}</p><p class="micro">${escapeHTML(t.group)} · Nội dung tóm lược do dự án biên soạn, không trích dẫn nguyên văn.</p><a href="${t.url}" target="_blank" rel="noopener noreferrer">Đọc bản dịch tại SuttaCentral ↗</a></article>`;}
+const templates={
+  home:()=>`<div class="panel-body"><h2>Chào mừng con</h2><p class="lead">Thiền Viện Tĩnh Lặng là một không gian để tìm hiểu và thực hành, không phải nơi tích điểm công đức hoặc mua sự thanh thản.</p><p>Hãy chọn Thiền đường để bắt đầu bằng hơi thở tự nhiên, hoặc Kinh tạng để tra cứu tư liệu đã được ghi nguồn.</p></div>`,
+  meditation:()=>`<div class="panel-body"><h2>Thực hành tĩnh lặng</h2><p class="lead">Ngồi ở tư thế vừa sức, để hơi thở diễn ra tự nhiên. Không ép thở chậm, sâu, hoặc nín thở. Nhận biết những gì đang diễn ra nơi thân và tâm khi tiến trình hơi thở tiếp tục.</p><div class="timer" id="clock" role="timer" aria-live="off">05:00</div><div class="time-buttons" aria-label="Chọn thời lượng"><button data-minutes="5" class="selected">5 phút</button><button data-minutes="10">10 phút</button><button data-minutes="20">20 phút</button></div><div class="time-buttons"><button id="timer-start" class="primary">Bắt đầu</button><button id="timer-reset">Đặt lại</button><button id="timer-voice">Nghe hướng dẫn</button></div><div class="divider"></div><p class="micro">Thời lượng là công cụ sắp xếp buổi thực hành, không phải thước đo thành tựu. Nếu khó chịu, chóng mặt, hoặc hoảng sợ, nên dừng thực hành và tìm hỗ trợ phù hợp.</p>${sourceLinks(['MN118'])}</div>`,
+  dharma:()=>`<div class="panel-body"><h2>Pháp đường</h2><p class="lead">Bài học ngắn, tách bạch giữa lời kinh và phần diễn giải. Chưa có lời khẳng định nào về tầng thiền hay chứng ngộ.</p>${teachings.filter(x=>x.group==='Giáo lý'||x.group==='Phương pháp học').map(card).join('')}<button data-view="library">Mở toàn bộ Kinh tạng</button></div>`,
+  library:()=>`<div class="panel-body"><h2>Kinh tạng</h2><p class="lead">Bốn nguồn khởi đầu. Đường dẫn dẫn tới văn bản gốc/bản dịch tại SuttaCentral; mọi mô tả bên dưới chỉ là tóm lược học tập.</p>${teachings.map(card).join('')}</div>`,
+  room:()=>`<div class="panel-body"><h2>Thiền thất</h2><p class="lead">Một không gian riêng tư, không bảng điểm và không so sánh tiến bộ. Con có thể thực hành trong im lặng, không cần ứng dụng phát âm thanh.</p><button data-view="meditation" class="primary">Bắt đầu một phiên tĩnh lặng</button><p class="micro">Ứng dụng phiên bản này không thu âm hoặc lưu nhật ký thiền lên máy chủ.</p></div>`,
+  garden:()=>`<div class="panel-body"><h2>Vườn thiền</h2><p class="lead">Hãy quan sát thiên nhiên một cách thư thả. Nếu đang đi bộ, chú ý an toàn trước tiên; không cần cố gắng tạo một trạng thái tâm đặc biệt.</p><p>Âm thanh chỉ là tùy chọn. Sự im lặng hoàn toàn vẫn là một cách trải nghiệm trọn vẹn.</p></div>`,
+  about:()=>`<div class="panel-body"><h2>Về Thiền viện</h2><p class="lead">Dự án không sử dụng mô hình bán công đức, không cấp chứng nhận giác ngộ và không lấy lời AI làm nguồn chân lý.</p><h3>Trạng thái nhân vật</h3><p>Thiền sư là nhân vật kỹ thuật số mô phỏng với mô hình GLB có hệ xương và hoạt ảnh. Đây là bản tạo hình nghiên cứu, chưa đạt chất lượng photorealistic và không đại diện cho tu sĩ có thật.</p><h3>Trạng thái AI</h3><p>Chế độ công khai GitHub Pages trả lời bằng nội dung tóm lược có nguồn được biên soạn trước. Chỉ khi có backend bảo mật mới bật hội thoại AI tự do.</p><p class="micro">Các nội dung tham khảo không thay thế hướng dẫn từ giảng sư có năng lực, chuyên gia y tế hoặc hỗ trợ khủng hoảng khi cần thiết.</p></div>`,
+  teacher:()=>`<div class="panel-body"><h2>Hỏi Thiền sư</h2><p class="lead">Con có thể hỏi về hơi thở, chánh niệm, Tứ thánh đế hoặc cách đối chiếu kinh điển.</p><p class="micro"><strong>Chế độ mặc định:</strong> thư viện trả lời có nguồn, không giả làm mô hình AI hội thoại trực tuyến. Không gửi câu hỏi tới máy chủ khi chưa bật kết nối.</p><label for="question">Câu hỏi</label><textarea id="question" maxlength="1200" placeholder="Ví dụ: Trong kinh MN 118, hơi thở dài và ngắn được đề cập như thế nào?"></textarea><div><button id="send-question" class="primary">Tìm lời giải thích có nguồn</button><button id="mic-question" title="Nhập câu hỏi bằng giọng nói trên trình duyệt hỗ trợ">🎙 Nói câu hỏi</button><button id="voice-answer">🔊 Nghe câu trả lời</button></div><div id="answer" class="chat-answer" role="status" aria-live="polite">Tôi chưa nhận được câu hỏi.</div><div id="answer-sources"></div><div class="divider"></div><p class="micro">Nhân vật này được giới thiệu minh bạch là AI mô phỏng. Không yêu cầu dữ liệu nhạy cảm, không tuyên bố biết tâm người học, không đưa ra dự đoán nghiệp báo hay cấp chứng nhận tu chứng.</p></div>`
+};
+function stopTimer(){if(timerId)clearInterval(timerId);timerId=null;running=false;}
+function clockString(){return String(Math.floor(remaining/60)).padStart(2,'0')+':'+String(remaining%60).padStart(2,'0');}
+function bindTimer(){const readout=byId('clock'),start=byId('timer-start');if(!readout)return;
+  const update=()=>readout.textContent=clockString();
+  byId('timer-reset').addEventListener('click',()=>{stopTimer();remaining=300;start.textContent='Bắt đầu';container.querySelectorAll('[data-minutes]').forEach((b)=>b.classList.toggle('selected',Number(b.dataset.minutes)===5));update();});
+  container.querySelectorAll('[data-minutes]').forEach(b=>b.addEventListener('click',()=>{stopTimer();remaining=Number(b.dataset.minutes)*60;start.textContent='Bắt đầu';container.querySelectorAll('[data-minutes]').forEach(x=>x.classList.toggle('selected',x===b));update();}));
+  start.addEventListener('click',()=>{if(running){stopTimer();start.textContent='Tiếp tục';return;}running=true;start.textContent='Tạm dừng';let last=Date.now();timerId=setInterval(()=>{const now=Date.now(),steps=Math.max(1,Math.round((now-last)/1000));last=now;remaining=Math.max(0,remaining-steps);update();if(remaining<=0){stopTimer();start.textContent='Bắt đầu';toast('Buổi thực hành đã kết thúc.');}},1000);});
+  byId('timer-voice').addEventListener('click',()=>speak('Hãy ngồi với tư thế thoải mái. Không cần điều khiển hơi thở. Chỉ nhận biết hơi thở và những biến đổi của thân, tâm có liên hệ. Nếu muốn, con có thể thực hành trong sự im lặng.'));
+}
+let lastAnswer='';
+function speak(s){if(!('speechSynthesis' in window)){toast('Trình duyệt không hỗ trợ đọc tiếng Việt.');return;}speechSynthesis.cancel();const msg=new SpeechSynthesisUtterance(s);msg.lang='vi-VN';msg.rate=.88;msg.pitch=.88;speechSynthesis.speak(msg);}
+function bindTeacher(){const q=byId('question'),answer=byId('answer'),sources=byId('answer-sources'),send=byId('send-question');
+  send.addEventListener('click',()=>{const question=q.value.trim();if(!question){toast('Hãy nhập câu hỏi trước.');return;}const result=offlineGuidance(question);lastAnswer=result.answer;answer.textContent=result.answer;sources.innerHTML=sourceLinks(result.sources);});
+  byId('voice-answer').addEventListener('click',()=>{if(!lastAnswer)return toast('Hãy đặt câu hỏi trước.');speak(lastAnswer);});
+  byId('mic-question').addEventListener('click',()=>{const Recognition=window.SpeechRecognition||window.webkitSpeechRecognition;if(!Recognition)return toast('Trình duyệt này chưa hỗ trợ nhận dạng giọng nói. Có thể nhập bằng bàn phím.');const rec=new Recognition();rec.lang='vi-VN';rec.continuous=false;rec.interimResults=false;rec.onresult=e=>{q.value=e.results[0][0].transcript;toast('Đã nhận câu hỏi, hãy chọn Tìm lời giải thích.');};rec.onerror=()=>toast('Không thể thu nhận giọng nói. Hãy nhập bằng bàn phím.');rec.start();});
+}
+function openPanel(view){stopTimer();if('speechSynthesis' in window)speechSynthesis.cancel();focus=view;environment?.setFocus(view);document.querySelectorAll('[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===view));
+  if(view==='home'){if(dialog.open)dialog.close();return;}
+  tag.textContent=({meditation:'THỰC HÀNH',dharma:'GIÁO PHÁP',library:'TÀI LIỆU THAM KHẢO',room:'THỰC HÀNH RIÊNG',garden:'KHÔNG GIAN TĨNH LẶNG',teacher:'TRỢ LÝ HỌC TẬP',about:'THÔNG TIN'}[view]||'THIỀN VIỆN');
+  container.innerHTML=(templates[view]||templates.home)();if(!dialog.open)dialog.showModal();
+  if(view==='meditation')bindTimer();if(view==='teacher')bindTeacher();
+}
+function closePanel(){stopTimer();if(dialog.open)dialog.close();environment?.setFocus('home');}
+document.querySelectorAll('[data-view]').forEach(b=>b.addEventListener('click',()=>openPanel(b.dataset.view)));
+container.addEventListener('click',e=>{const b=e.target.closest('[data-view]');if(b)openPanel(b.dataset.view);});
+byId('panel-close').addEventListener('click',closePanel);dialog.addEventListener('cancel',()=>{stopTimer();environment?.setFocus('home');});
+byId('quality-toggle').addEventListener('click',()=>{if(!environment)return toast('Mô hình 3D chưa sẵn sàng.');const q=environment.quality();toast(q==='eco'?'Đã chuyển sang đồ họa tiết kiệm.':'Đã chuyển sang đồ họa cân bằng.');});
+byId('sound-toggle').addEventListener('click',()=>{const b=byId('sound-toggle');if(natureSound){natureSound.osc.stop();natureSound.osc.disconnect();natureSound.gain.disconnect();natureSound=null;b.classList.remove('active');return;}
+  // Gentle synthesized wind texture; cannot promise authentic nature recordings.
+  const C=window.AudioContext||window.webkitAudioContext;if(!C){toast('Trình duyệt không hỗ trợ âm thanh.');return;}audioContext??=new C();audioContext.resume();const osc=audioContext.createOscillator(),gain=audioContext.createGain();osc.type='sine';osc.frequency.setValueAtTime(163,audioContext.currentTime);gain.gain.value=.008;osc.connect(gain).connect(audioContext.destination);osc.start();natureSound={osc,gain};b.classList.add('active');toast('Đã bật âm nền rất nhỏ. Có thể tắt bất cứ lúc nào.');
+});
+try{environment=createSanctuary(byId('scene'),{
+  onReady:({bones,animations})=>{document.body.classList.add('scene-ready');status.textContent=`Thiền sư 3D: ${bones} xương · ${animations.length} hoạt ảnh · bản dựng nghệ thuật`;},
+  onError:message=>{status.textContent='Cảnh quan 3D đang hoạt động; nhân vật 3D chưa sẵn sàng.';toast(message);}
+});document.body.classList.add('scene-ready');}catch(e){console.error(e);status.textContent='Không thể khởi tạo WebGL — đang hiển thị cảnh nền tĩnh.';}
+if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register(`${import.meta.env.BASE_URL}sw.js`).catch(e=>console.warn('PWA registration:',e)));}

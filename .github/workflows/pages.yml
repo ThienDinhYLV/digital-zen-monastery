@@ -18,8 +18,14 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - run: npm install --no-audit --no-fund
-      - run: npm run build
+      - name: Install packages
+        run: npm install --no-audit --no-fund
+      - name: Run integrity tests
+        run: npm test
+      - name: Build static site
+        run: npm run build
+      - name: Check built root entrypoint
+        run: test -s dist/index.html && test -s dist/assets/monk-rigged.glb
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist

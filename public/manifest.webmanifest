@@ -1,16 +1,14 @@
 {
   "name": "Thiền Viện Tĩnh Lặng",
-  "short_name": "Thiền Viện",
-  "start_url": ".",
-  "scope": ".",
+  "short_name": "Thiền viện",
+  "description": "Không gian thiền và giáo pháp có nguồn tham chiếu",
+  "start_url": "./",
+  "scope": "./",
   "display": "standalone",
-  "background_color": "#182c23",
-  "theme_color": "#182c23",
+  "background_color": "#172921",
+  "theme_color": "#172921",
   "icons": [
-    {
-      "src": "icon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml"
-    }
+    {"src":"./icons/icon-192.png","sizes":"192x192","type":"image/png","purpose":"any maskable"},
+    {"src":"./icons/icon-512.png","sizes":"512x512","type":"image/png","purpose":"any maskable"}
   ]
 }

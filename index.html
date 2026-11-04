@@ -1,1 +1,66 @@
-<!doctype html><html lang="vi"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/><meta name="theme-color" content="#182c23"/><meta name="apple-mobile-web-app-capable" content="yes"/><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/><link rel="manifest" href="./manifest.webmanifest"/><title>Thiền Viện Tĩnh Lặng</title></head><body><div id="app"></div><script type="module" src="./src.js"></script></body></html>
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#172921" />
+  <meta name="description" content="Thiền Viện Tĩnh Lặng — không gian học giáo pháp và thực hành quan sát hơi thở tự nhiên, không thương mại hóa công đức." />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <link rel="icon" type="image/svg+xml" href="./icon.svg" />
+  <link rel="apple-touch-icon" href="./icons/icon-192.png" />
+  <link rel="stylesheet" href="./style.css" />
+  <title>Thiền Viện Tĩnh Lặng · Digital Meditation Sanctuary</title>
+</head>
+<body>
+  <div id="world" aria-hidden="true">
+    <div id="scenic-plate"></div>
+    <canvas id="scene" aria-label="Cảnh quan Thiền viện ba chiều"></canvas>
+    <div id="atmosphere"></div>
+  </div>
+  <div id="app">
+    <header class="topbar">
+      <a class="brand" href="./" aria-label="Thiền Viện Tĩnh Lặng — Trang chủ">
+        <svg class="brand-mark" viewBox="0 0 64 64" aria-hidden="true"><path d="M32 49C16 42 12 29 21 18c2 12 9 19 11 19 2 0 9-7 11-19 9 11 5 24-11 31Z"/><path d="M32 49C25 35 26 22 32 12c6 10 7 23 0 37Z"/><path d="M10 39c8-5 15-2 22 10C19 53 11 50 10 39Zm44 0c-8-5-15-2-22 10 13 4 21 1 22-10Z"/></svg>
+        <span><strong>Thiền Viện Tĩnh Lặng</strong><small>DIGITAL MEDITATION SANCTUARY</small></span>
+      </a>
+      <div class="header-right">
+        <span class="edition">PHIÊN BẢN NGHIÊN CỨU · V1.4</span>
+        <button id="sound-toggle" class="icon-button" aria-label="Bật hoặc tắt âm nền nhẹ" title="Âm nền nhẹ (tùy chọn)">♫</button>
+        <button id="quality-toggle" class="icon-button" aria-label="Điều chỉnh chất lượng đồ họa" title="Chất lượng đồ họa">◐</button>
+      </div>
+    </header>
+
+    <nav class="side-nav" aria-label="Điều hướng Thiền viện">
+      <span class="nav-eyebrow">KHÔNG GIAN TU HỌC</span>
+      <button class="nav-button active" data-view="home"><span>⌂</span><span>Thiền môn</span></button>
+      <button class="nav-button" data-view="meditation"><span>◉</span><span>Thiền đường</span></button>
+      <button class="nav-button" data-view="dharma"><span>☷</span><span>Pháp đường</span></button>
+      <button class="nav-button" data-view="library"><span>▤</span><span>Kinh tạng</span></button>
+      <button class="nav-button" data-view="room"><span>◫</span><span>Thiền thất</span></button>
+      <button class="nav-button" data-view="garden"><span>❀</span><span>Vườn thiền</span></button>
+      <div class="nav-spacer"></div>
+      <button class="nav-button nav-help" data-view="about"><span>ⓘ</span><span>Giới thiệu</span></button>
+    </nav>
+
+    <main class="welcome" id="welcome">
+      <div class="welcome-eyebrow"><span></span> MỘT NƠI ĐỂ HIỂU & THỰC HÀNH</div>
+      <h1>Trở về với<br /><em>sự tĩnh lặng.</em></h1>
+      <p class="welcome-copy">Giữa thiên nhiên và sự giản dị, hãy dành một khoảng không gian cho việc học hỏi, quan sát và thực hành.</p>
+      <div class="welcome-actions">
+        <button class="action-primary" data-view="meditation">Bắt đầu thực hành <span aria-hidden="true">↗</span></button>
+        <button class="action-secondary" data-view="dharma">Khám phá giáo pháp</button>
+      </div>
+      <p class="welcome-hint">Không quảng cáo · Không điểm công đức · Không cưỡng ép hơi thở</p>
+    </main>
+
+    <div class="teacher-identity" id="teacher-label"><span class="teacher-dot"></span><div><strong>Thiền sư AI</strong><small>Nhân vật mô phỏng · Không phải tu sĩ thật</small></div></div>
+    <button class="teacher-talk" id="teacher-talk" data-view="teacher" aria-label="Trò chuyện với Thiền sư AI"><span class="talk-icon">❝</span><span><strong>Hỏi Thiền sư</strong><small>Giải đáp có dẫn nguồn</small></span><span>↗</span></button>
+    <div class="world-footer"><span id="render-status">Đang chuẩn bị không gian 3D…</span><span>Thực hành là trọng tâm — công nghệ chỉ là phương tiện.</span></div>
+  </div>
+  <dialog id="panel" class="study-panel" aria-label="Không gian học và thực hành"><div class="panel-head"><span id="panel-tag">THIỀN VIỆN</span><button id="panel-close" aria-label="Đóng cửa sổ">✕</button></div><div id="panel-content"></div></dialog>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>
