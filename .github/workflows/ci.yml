@@ -1,0 +1,31 @@
+name: V1.4 Pull Request QA
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install
+        run: npm install --no-audit --no-fund
+      - name: Test
+        run: npm test
+      - name: Production Build
+        run: npm run build
+        env:
+          GITHUB_REPOSITORY: ThienDinhYLV/digital-zen-monastery
+      - name: Verify Pages Assets
+        run: |
+          test -s dist/index.html
+          test -s dist/assets/monk-rigged.glb
+          grep -q '/digital-zen-monastery/assets/' dist/index.html
